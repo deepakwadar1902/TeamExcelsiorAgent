@@ -1,0 +1,1443 @@
+{
+  "version" : "57.0",
+  "nodes" : {
+    "LOAD_DATASET0" : {
+      "action" : "load",
+      "sources" : [ ],
+      "parameters" : {
+        "fields" : [ "Id", "Name", "CreatedDate", "LastModifiedDate", "NameInsuredId", "PolicyName", "EffectiveDate", "ExpirationDate", "PremiumAmount", "CancellationDate", "CancellationReason", "RenewalDate", "FinalRenewalDate", "PolicyDescription", "Status", "PremiumFrequency", "PlanTier", "PolicyType", "PlanType", "ProducerId", "IsActive", "ServicingOfficeCity", "ServicingOfficeState", "ServicingOfficeCountry", "IsRenewedPolicy", "GrossWrittenPremium", "CancellationReasonType", "DateRenewed", "ProductId" ],
+        "dataset" : {
+          "type" : "connectedDataset",
+          "label" : "InsurancePolicy",
+          "connectionName" : "SFDC_LOCAL",
+          "sourceObjectName" : "InsurancePolicy"
+        },
+        "sampleDetails" : {
+          "type" : "TopN",
+          "sortBy" : [ ]
+        }
+      }
+    },
+    "LOAD_DATASET1" : {
+      "action" : "load",
+      "sources" : [ ],
+      "parameters" : {
+        "fields" : [ "Id", "Name", "LastName", "FirstName", "Type", "BillingCity", "BillingState", "BillingCountry", "Industry", "CreatedDate", "LastModifiedDate" ],
+        "dataset" : {
+          "type" : "connectedDataset",
+          "label" : "Account",
+          "connectionName" : "SFDC_LOCAL",
+          "sourceObjectName" : "Account"
+        },
+        "sampleDetails" : {
+          "type" : "TopN",
+          "sortBy" : [ ]
+        }
+      }
+    },
+    "JOIN0" : {
+      "action" : "join",
+      "sources" : [ "LOAD_DATASET0", "LOAD_DATASET1" ],
+      "schema" : {
+        "fields" : [ ],
+        "slice" : {
+          "mode" : "DROP",
+          "ignoreMissingFields" : true,
+          "fields" : [ ]
+        }
+      },
+      "parameters" : {
+        "joinType" : "LOOKUP",
+        "leftKeys" : [ "NameInsuredId" ],
+        "rightQualifier" : "Account",
+        "rightKeys" : [ "Id" ]
+      }
+    },
+    "FORMULA0" : {
+      "action" : "formula",
+      "sources" : [ "JOIN0" ],
+      "parameters" : {
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "TEXT",
+          "name" : "dummy",
+          "label" : "dummy",
+          "formulaExpression" : "'all'",
+          "precision" : 255,
+          "defaultValue" : ""
+        } ]
+      }
+    },
+    "FORMULA1" : {
+      "action" : "computeRelative",
+      "sources" : [ "FORMULA0" ],
+      "parameters" : {
+        "partitionBy" : [ "dummy" ],
+        "orderBy" : [ {
+          "fieldName" : "GrossWrittenPremium",
+          "direction" : "ASC"
+        } ],
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "NUMBER",
+          "name" : "MinGWP",
+          "label" : "MinGWP",
+          "formulaExpression" : "first_value(GrossWrittenPremium)",
+          "precision" : 10,
+          "scale" : 0,
+          "defaultValue" : "0"
+        } ]
+      }
+    },
+    "FORMULA2" : {
+      "action" : "computeRelative",
+      "sources" : [ "FORMULA1" ],
+      "parameters" : {
+        "partitionBy" : [ "dummy" ],
+        "orderBy" : [ {
+          "fieldName" : "GrossWrittenPremium",
+          "direction" : "DESC"
+        } ],
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "NUMBER",
+          "name" : "MaxGWP",
+          "label" : "MaxGWP",
+          "formulaExpression" : "first_value(GrossWrittenPremium)",
+          "precision" : 10,
+          "scale" : 0,
+          "defaultValue" : ""
+        } ]
+      }
+    },
+    "FORMULA3" : {
+      "action" : "formula",
+      "sources" : [ "FORMULA2" ],
+      "parameters" : {
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "NUMBER",
+          "name" : "GWP_Grouping",
+          "label" : "GWP_Grouping",
+          "formulaExpression" : "(MaxGWP-MinGWP)/5",
+          "precision" : 10,
+          "scale" : 0,
+          "defaultValue" : ""
+        } ]
+      }
+    },
+    "FORMULA4" : {
+      "action" : "formula",
+      "sources" : [ "FORMULA3" ],
+      "parameters" : {
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "TEXT",
+          "name" : "GWP_Bucket",
+          "label" : "GWP Bucket",
+          "formulaExpression" : "case \n\twhen \"GrossWrittenPremium\" >= MinGWP and \"GrossWrittenPremium\" < GWP_Grouping\n\tthen concat('1.',string(MinGWP),'-',string(GWP_Grouping))\nwhen \"GrossWrittenPremium\" >= GWP_Grouping and \"GrossWrittenPremium\" < GWP_Grouping*2\n\tthen concat('2.',string(GWP_Grouping),'-',string(GWP_Grouping*2))\n    when \"GrossWrittenPremium\" >= GWP_Grouping*2 and \"GrossWrittenPremium\" < GWP_Grouping*3\n\tthen concat('3.',string(GWP_Grouping*2),'-',string(GWP_Grouping*3))\n     when \"GrossWrittenPremium\" >= GWP_Grouping*3 and \"GrossWrittenPremium\" < GWP_Grouping*4\n\tthen concat('4.',string(GWP_Grouping*3),'-',string(GWP_Grouping*4))\n    when \"GrossWrittenPremium\" >= GWP_Grouping*4 \n\tthen concat('5.','>',string(GWP_Grouping*4))\n\telse\n\t'NA'\nend",
+          "precision" : 255,
+          "defaultValue" : ""
+        } ]
+      }
+    },
+    "FORMULA17" : {
+      "action" : "formula",
+      "sources" : [ "FORMULA4" ],
+      "parameters" : {
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "NUMBER",
+          "name" : "Tenure",
+          "label" : "Tenure",
+          "formulaExpression" : "datediff(now(), \"EffectiveDate\")/365",
+          "precision" : 10,
+          "scale" : 0,
+          "defaultValue" : ""
+        } ]
+      }
+    },
+    "FORMULA18" : {
+      "action" : "computeRelative",
+      "sources" : [ "FORMULA19" ],
+      "parameters" : {
+        "partitionBy" : [ "dummy" ],
+        "orderBy" : [ {
+          "fieldName" : "Tenure",
+          "direction" : "ASC"
+        } ],
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "NUMBER",
+          "name" : "MinTenure",
+          "label" : "MinTenure",
+          "formulaExpression" : "first_value(Tenure)",
+          "precision" : 10,
+          "scale" : 0,
+          "defaultValue" : ""
+        } ]
+      }
+    },
+    "FORMULA19" : {
+      "action" : "computeRelative",
+      "sources" : [ "FORMULA17" ],
+      "parameters" : {
+        "partitionBy" : [ "dummy" ],
+        "orderBy" : [ {
+          "fieldName" : "Tenure",
+          "direction" : "DESC"
+        } ],
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "NUMBER",
+          "name" : "MaxTenure",
+          "label" : "MaxTenure",
+          "formulaExpression" : "first_value(Tenure)",
+          "precision" : 10,
+          "scale" : 0,
+          "defaultValue" : ""
+        } ]
+      }
+    },
+    "FORMULA20" : {
+      "action" : "formula",
+      "sources" : [ "FORMULA18" ],
+      "parameters" : {
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "NUMBER",
+          "name" : "TenureGrouping",
+          "label" : "TenureGrouping",
+          "formulaExpression" : " (MaxTenure - MinTenure)/5",
+          "precision" : 10,
+          "scale" : 0,
+          "defaultValue" : ""
+        } ]
+      }
+    },
+    "FORMULA21" : {
+      "action" : "formula",
+      "sources" : [ "FORMULA20" ],
+      "parameters" : {
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "TEXT",
+          "name" : "Tenure_Bucket",
+          "label" : "Tenure_Bucket",
+          "formulaExpression" : "case \n\twhen \"Tenure\" >= MinTenure and \"Tenure\" < TenureGrouping\n\tthen concat('1.',string(MinTenure),'-',string(TenureGrouping)) \nwhen \"Tenure\" >= TenureGrouping and \"Tenure\" < \nTenureGrouping*2 \n\tthen concat('2.',string(TenureGrouping),'-',string(TenureGrouping*2)) \n    when \"Tenure\" >= TenureGrouping*2 and \"Tenure\" < TenureGrouping*3\n\tthen concat('3.',string(TenureGrouping*2),'-',string(TenureGrouping*3))\n     when \"Tenure\" >= TenureGrouping*3 and \"Tenure\" < TenureGrouping*4\n\tthen concat('4.',string(TenureGrouping*3),'-',string(TenureGrouping*4))\n    when \"Tenure\" >= TenureGrouping*4 \n\tthen concat('5.','>',string(TenureGrouping*4))\n\telse\n\t'NA'\nend",
+          "precision" : 255,
+          "defaultValue" : ""
+        } ]
+      }
+    },
+    "LOAD_DATASET2" : {
+      "action" : "load",
+      "sources" : [ ],
+      "parameters" : {
+        "fields" : [ "Id", "Name", "CreatedDate", "AccountId", "Type", "InternalUserId", "ContactId" ],
+        "dataset" : {
+          "type" : "connectedDataset",
+          "label" : "Producer",
+          "connectionName" : "SFDC_LOCAL",
+          "sourceObjectName" : "Producer"
+        },
+        "sampleDetails" : {
+          "type" : "TopN",
+          "sortBy" : [ ]
+        }
+      }
+    },
+    "LOAD_DATASET3" : {
+      "action" : "load",
+      "sources" : [ ],
+      "parameters" : {
+        "fields" : [ "Id", "Username", "LastName", "FirstName", "Name", "UserRoleId", "ManagerId", "ContactId", "AccountId", "SmallPhotoUrl" ],
+        "dataset" : {
+          "type" : "connectedDataset",
+          "label" : "User",
+          "connectionName" : "SFDC_LOCAL",
+          "sourceObjectName" : "User"
+        },
+        "sampleDetails" : {
+          "type" : "TopN",
+          "sortBy" : [ ]
+        }
+      }
+    },
+    "OUTPUT0" : {
+      "action" : "save",
+      "sources" : [ "JOIN21" ],
+      "parameters" : {
+        "fields" : [ ],
+        "dataset" : {
+          "type" : "analyticsDataset",
+          "label" : "FSC INS Insurance Policy",
+          "name" : "FSC_INS_Insurance_Policy",
+          "rowLevelSecurityFilter" : "",
+          "folderName" : "FSCInsuranceFastStartApp"
+        }
+      }
+    },
+    "JOIN4" : {
+      "action" : "join",
+      "sources" : [ "JOIN6", "LOAD_DATASET3" ],
+      "schema" : {
+        "fields" : [ ],
+        "slice" : {
+          "mode" : "DROP",
+          "ignoreMissingFields" : true,
+          "fields" : [ ]
+        }
+      },
+      "parameters" : {
+        "joinType" : "LOOKUP",
+        "leftKeys" : [ "ContactId" ],
+        "rightQualifier" : "ContactUser",
+        "rightKeys" : [ "ContactId" ]
+      }
+    },
+    "LOAD_DATASET5" : {
+      "action" : "load",
+      "sources" : [ ],
+      "parameters" : {
+        "fields" : [ "Id", "AccountId", "LastName", "FirstName", "Name" ],
+        "dataset" : {
+          "type" : "connectedDataset",
+          "label" : "Contact",
+          "connectionName" : "SFDC_LOCAL",
+          "sourceObjectName" : "Contact"
+        },
+        "sampleDetails" : {
+          "type" : "TopN",
+          "sortBy" : [ ]
+        }
+      }
+    },
+    "JOIN5" : {
+      "action" : "join",
+      "sources" : [ "LOAD_DATASET2", "LOAD_DATASET5" ],
+      "schema" : {
+        "fields" : [ ],
+        "slice" : {
+          "mode" : "DROP",
+          "ignoreMissingFields" : true,
+          "fields" : [ ]
+        }
+      },
+      "parameters" : {
+        "joinType" : "LOOKUP",
+        "leftKeys" : [ "ContactId" ],
+        "rightQualifier" : "ProducerContact",
+        "rightKeys" : [ "Id" ]
+      }
+    },
+    "JOIN6" : {
+      "action" : "join",
+      "sources" : [ "JOIN5", "LOAD_DATASET3" ],
+      "schema" : {
+        "fields" : [ ],
+        "slice" : {
+          "mode" : "DROP",
+          "ignoreMissingFields" : true,
+          "fields" : [ ]
+        }
+      },
+      "parameters" : {
+        "joinType" : "LOOKUP",
+        "leftKeys" : [ "InternalUserId" ],
+        "rightQualifier" : "ProducerUser",
+        "rightKeys" : [ "Id" ]
+      }
+    },
+    "FORMULA6" : {
+      "action" : "formula",
+      "sources" : [ "JOIN4" ],
+      "parameters" : {
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "TEXT",
+          "name" : "Producer_Name",
+          "label" : "Producer Name",
+          "formulaExpression" : "coalesce(\"ProducerUser.Name\", \"ProducerContact.Name\")",
+          "precision" : 255,
+          "defaultValue" : ""
+        } ]
+      }
+    },
+    "FORMULA16" : {
+      "action" : "formula",
+      "sources" : [ "FORMULA6" ],
+      "parameters" : {
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "TEXT",
+          "name" : "UserId_Derived",
+          "label" : "UserId_Derived",
+          "formulaExpression" : "coalesce(InternalUserId, \"ContactUser.Id\",\"ProducerContact.Id\")",
+          "precision" : 255,
+          "defaultValue" : ""
+        } ]
+      }
+    },
+    "JOIN10" : {
+      "action" : "join",
+      "sources" : [ "FORMULA21", "FORMULA16" ],
+      "schema" : {
+        "fields" : [ ],
+        "slice" : {
+          "mode" : "DROP",
+          "ignoreMissingFields" : true,
+          "fields" : [ ]
+        }
+      },
+      "parameters" : {
+        "joinType" : "LOOKUP",
+        "leftKeys" : [ "ProducerId" ],
+        "rightQualifier" : "PolicyProducer",
+        "rightKeys" : [ "Id" ]
+      }
+    },
+    "JOIN11" : {
+      "action" : "join",
+      "sources" : [ "LOAD_DATASET1", "JOIN16" ],
+      "schema" : {
+        "fields" : [ ],
+        "slice" : {
+          "mode" : "DROP",
+          "ignoreMissingFields" : true,
+          "fields" : [ ]
+        }
+      },
+      "parameters" : {
+        "joinType" : "MULTI_VALUE_LOOKUP",
+        "leftKeys" : [ "Id" ],
+        "rightQualifier" : "Policy",
+        "rightKeys" : [ "NameInsuredId" ]
+      }
+    },
+    "FORMULA13" : {
+      "action" : "formula",
+      "sources" : [ "JOIN11" ],
+      "parameters" : {
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "TEXT",
+          "name" : "PolicyType_MultiValueField",
+          "label" : "PolicyType_MultiValueField",
+          "formulaExpression" : "array_join(\"Policy.PolicyType\",',')",
+          "precision" : 255,
+          "defaultValue" : ""
+        } ]
+      }
+    },
+    "OUTPUT1" : {
+      "action" : "save",
+      "sources" : [ "JOIN14" ],
+      "parameters" : {
+        "fields" : [ ],
+        "dataset" : {
+          "type" : "analyticsDataset",
+          "label" : "FS INS Customer",
+          "name" : "FS_INS_Customer",
+          "rowLevelSecurityFilter" : "",
+          "folderName" : "FSCInsuranceFastStartApp"
+        }
+      }
+    },
+    "LOAD_DATASET6" : {
+      "action" : "load",
+      "sources" : [ ],
+      "parameters" : {
+        "fields" : [ "Id", "OwnerId", "Name", "CreatedDate", "PrimaryPersonId", "EventDate", "EventDescription", "RelatedPersonId", "EventType", "IsExpired", "ExpirationDate", "LastModifiedDate", "ExpirationDescription" ],
+        "dataset" : {
+          "type" : "connectedDataset",
+          "label" : "PersonLifeEvent",
+          "connectionName" : "SFDC_LOCAL",
+          "sourceObjectName" : "PersonLifeEvent"
+        },
+        "sampleDetails" : {
+          "type" : "TopN",
+          "sortBy" : [ ]
+        }
+      }
+    },
+    "JOIN13" : {
+      "action" : "join",
+      "sources" : [ "LOAD_DATASET6", "LOAD_DATASET5" ],
+      "schema" : {
+        "fields" : [ ],
+        "slice" : {
+          "mode" : "DROP",
+          "ignoreMissingFields" : true,
+          "fields" : [ ]
+        }
+      },
+      "parameters" : {
+        "joinType" : "LOOKUP",
+        "leftKeys" : [ "PrimaryPersonId" ],
+        "rightQualifier" : "Contact",
+        "rightKeys" : [ "Id" ]
+      }
+    },
+    "JOIN14" : {
+      "action" : "join",
+      "sources" : [ "FORMULA13", "JOIN13" ],
+      "schema" : {
+        "fields" : [ ],
+        "slice" : {
+          "mode" : "DROP",
+          "ignoreMissingFields" : true,
+          "fields" : [ ]
+        }
+      },
+      "parameters" : {
+        "joinType" : "MULTI_VALUE_LOOKUP",
+        "leftKeys" : [ "Id" ],
+        "rightQualifier" : "PersonLifeEvent",
+        "rightKeys" : [ "Contact.AccountId" ]
+      }
+    },
+    "JOIN16" : {
+      "action" : "join",
+      "sources" : [ "LOAD_DATASET0", "FORMULA16" ],
+      "schema" : {
+        "fields" : [ ],
+        "slice" : {
+          "mode" : "DROP",
+          "ignoreMissingFields" : true,
+          "fields" : [ ]
+        }
+      },
+      "parameters" : {
+        "joinType" : "LOOKUP",
+        "leftKeys" : [ "ProducerId" ],
+        "rightQualifier" : "UserSP",
+        "rightKeys" : [ "Id" ]
+      }
+    },
+    "EXTRACT0" : {
+      "action" : "extractGrains",
+      "sources" : [ "LOAD_DATASET0" ],
+      "parameters" : {
+        "grainExtractions" : [ ]
+      }
+    },
+    "AGGREGATE1" : {
+      "action" : "aggregate",
+      "sources" : [ "EXTRACT0" ],
+      "parameters" : {
+        "aggregations" : [ {
+          "action" : "COUNT",
+          "name" : "COUNT_Rows",
+          "label" : "Rows"
+        } ],
+        "groupings" : [ "PolicyType" ],
+        "pivots" : [ ],
+        "nodeType" : "STANDARD"
+      }
+    },
+    "EXTRACT1" : {
+      "action" : "extractGrains",
+      "sources" : [ "LOAD_DATASET1" ],
+      "parameters" : {
+        "grainExtractions" : [ ]
+      }
+    },
+    "AGGREGATE3" : {
+      "action" : "aggregate",
+      "sources" : [ "EXTRACT1" ],
+      "parameters" : {
+        "aggregations" : [ {
+          "action" : "COUNT",
+          "name" : "COUNT_Rows",
+          "label" : "Rows"
+        } ],
+        "groupings" : [ "Id" ],
+        "pivots" : [ ],
+        "nodeType" : "STANDARD"
+      }
+    },
+    "EXTRACT2" : {
+      "action" : "extractGrains",
+      "sources" : [ "LOAD_DATASET0" ],
+      "parameters" : {
+        "grainExtractions" : [ ]
+      }
+    },
+    "AGGREGATE5" : {
+      "action" : "aggregate",
+      "sources" : [ "EXTRACT2" ],
+      "parameters" : {
+        "aggregations" : [ {
+          "action" : "COUNT",
+          "name" : "COUNT_Rows",
+          "label" : "Rows"
+        } ],
+        "groupings" : [ "NameInsuredId", "PolicyType" ],
+        "pivots" : [ ],
+        "nodeType" : "STANDARD"
+      }
+    },
+    "JOIN19" : {
+      "action" : "join",
+      "sources" : [ "FORMULA23", "FORMULA22" ],
+      "schema" : {
+        "slice" : {
+          "mode" : "DROP",
+          "ignoreMissingFields" : true,
+          "fields" : [ "DummyJoin", "CrossJoin.DummyJoin" ]
+        }
+      },
+      "parameters" : {
+        "joinType" : "INNER",
+        "leftKeys" : [ "DummyJoin" ],
+        "rightQualifier" : "CrossJoin",
+        "rightKeys" : [ "DummyJoin" ]
+      }
+    },
+    "JOIN20" : {
+      "action" : "join",
+      "sources" : [ "JOIN19", "AGGREGATE5" ],
+      "schema" : {
+        "slice" : {
+          "mode" : "DROP",
+          "ignoreMissingFields" : true,
+          "fields" : [ ]
+        }
+      },
+      "parameters" : {
+        "joinType" : "LEFT_OUTER",
+        "leftKeys" : [ "Id", "CrossJoin.PolicyType" ],
+        "rightQualifier" : "PolicyType",
+        "rightKeys" : [ "NameInsuredId", "PolicyType" ]
+      }
+    },
+    "FILTER0" : {
+      "action" : "filter",
+      "sources" : [ "JOIN20" ],
+      "parameters" : {
+        "filterExpressions" : [ {
+          "type" : "TEXT",
+          "field" : "PolicyType.PolicyType",
+          "operator" : "IS_NULL",
+          "operands" : [ ]
+        } ]
+      }
+    },
+    "JOIN21" : {
+      "action" : "join",
+      "sources" : [ "JOIN22", "FILTER0" ],
+      "schema" : {
+        "fields" : [ ],
+        "slice" : {
+          "mode" : "DROP",
+          "ignoreMissingFields" : true,
+          "fields" : [ ]
+        }
+      },
+      "parameters" : {
+        "joinType" : "MULTI_VALUE_LOOKUP",
+        "leftKeys" : [ "NameInsuredId" ],
+        "rightQualifier" : "Filter0",
+        "rightKeys" : [ "Id" ]
+      }
+    },
+    "JOIN22" : {
+      "action" : "join",
+      "sources" : [ "JOIN10", "JOIN13" ],
+      "schema" : {
+        "fields" : [ ],
+        "slice" : {
+          "mode" : "DROP",
+          "ignoreMissingFields" : true,
+          "fields" : [ ]
+        }
+      },
+      "parameters" : {
+        "joinType" : "MULTI_VALUE_LOOKUP",
+        "leftKeys" : [ "NameInsuredId" ],
+        "rightQualifier" : "PersonLifeEvent",
+        "rightKeys" : [ "Contact.AccountId" ]
+      }
+    },
+    "FORMULA22" : {
+      "action" : "formula",
+      "sources" : [ "AGGREGATE1" ],
+      "parameters" : {
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "TEXT",
+          "name" : "DummyJoin",
+          "label" : "DummyJoin",
+          "formulaExpression" : "'Dummy'",
+          "precision" : 255,
+          "defaultValue" : ""
+        } ]
+      }
+    },
+    "FORMULA23" : {
+      "action" : "formula",
+      "sources" : [ "AGGREGATE3" ],
+      "parameters" : {
+        "expressionType" : "SQL",
+        "fields" : [ {
+          "type" : "TEXT",
+          "name" : "DummyJoin",
+          "label" : "DummyJoin",
+          "formulaExpression" : "'Dummy'",
+          "precision" : 255,
+          "defaultValue" : ""
+        } ]
+      }
+    }
+  },
+  "ui" : {
+    "nodes" : {
+      "LOAD_DATASET0" : {
+        "label" : "InsurancePolicy",
+        "type" : "LOAD_DATASET",
+        "top" : 390.4,
+        "left" : 112,
+        "parameters" : {
+          "sampleSize" : 2000
+        }
+      },
+      "LOAD_DATASET1" : {
+        "label" : "Account",
+        "type" : "LOAD_DATASET",
+        "top" : 530.4,
+        "left" : 112,
+        "parameters" : {
+          "sampleSize" : 2000
+        }
+      },
+      "JOIN0" : {
+        "label" : "Join_Policy_Account",
+        "description" : "",
+        "type" : "JOIN",
+        "top" : 392,
+        "left" : 252
+      },
+      "TRANSFORM0" : {
+        "label" : "Transform_GWPGrouping_Tenure",
+        "description" : "",
+        "type" : "TRANSFORM",
+        "top" : 390.3,
+        "left" : 392,
+        "graph" : {
+          "FORMULA0" : {
+            "parameters" : {
+              "type" : "BASE_FORMULA_UI"
+            },
+            "label" : "Formula Dummy"
+          },
+          "FORMULA1" : {
+            "label" : "Formula MinGWP"
+          },
+          "FORMULA2" : {
+            "label" : "Formula MaxGWP"
+          },
+          "FORMULA3" : {
+            "parameters" : {
+              "type" : "BASE_FORMULA_UI"
+            },
+            "label" : "Formula GWP Grouping"
+          },
+          "FORMULA4" : {
+            "parameters" : {
+              "type" : "BASE_FORMULA_UI"
+            },
+            "label" : "Formula GWP_Bucket"
+          },
+          "FORMULA17" : {
+            "parameters" : {
+              "type" : "BASE_FORMULA_UI"
+            },
+            "label" : "Formula Tenure"
+          },
+          "FORMULA18" : {
+            "label" : "Formula_MinTenure"
+          },
+          "FORMULA19" : {
+            "label" : "Formula MaxTenure"
+          },
+          "FORMULA20" : {
+            "parameters" : {
+              "type" : "BASE_FORMULA_UI"
+            },
+            "label" : "Formula TenureGrouping"
+          },
+          "FORMULA21" : {
+            "parameters" : {
+              "type" : "BASE_FORMULA_UI"
+            },
+            "label" : "Formula Tenure_Bucket"
+          }
+        },
+        "connectors" : [ {
+          "source" : "FORMULA0",
+          "target" : "FORMULA1"
+        }, {
+          "source" : "FORMULA1",
+          "target" : "FORMULA2"
+        }, {
+          "source" : "FORMULA2",
+          "target" : "FORMULA3"
+        }, {
+          "source" : "FORMULA3",
+          "target" : "FORMULA4"
+        }, {
+          "source" : "FORMULA4",
+          "target" : "FORMULA17"
+        }, {
+          "source" : "FORMULA19",
+          "target" : "FORMULA18"
+        }, {
+          "source" : "FORMULA17",
+          "target" : "FORMULA19"
+        }, {
+          "source" : "FORMULA18",
+          "target" : "FORMULA20"
+        }, {
+          "source" : "FORMULA20",
+          "target" : "FORMULA21"
+        } ]
+      },
+      "LOAD_DATASET2" : {
+        "label" : "Producer",
+        "type" : "LOAD_DATASET",
+        "top" : 670.4,
+        "left" : 112,
+        "parameters" : {
+          "sampleSize" : 2000
+        }
+      },
+      "LOAD_DATASET3" : {
+        "label" : "User",
+        "type" : "LOAD_DATASET",
+        "top" : 1232.1,
+        "left" : 112,
+        "parameters" : {
+          "sampleSize" : 2000
+        }
+      },
+      "OUTPUT0" : {
+        "label" : "Output_InsurancePolicy",
+        "description" : "",
+        "type" : "OUTPUT",
+        "top" : 672.4,
+        "left" : 2212.4
+      },
+      "JOIN4" : {
+        "label" : "Join_ProducerContact_User viaContactId",
+        "description" : "",
+        "type" : "JOIN",
+        "top" : 812.1,
+        "left" : 532
+      },
+      "LOAD_DATASET5" : {
+        "label" : "Contact",
+        "type" : "LOAD_DATASET",
+        "top" : 810.4,
+        "left" : 112,
+        "parameters" : {
+          "sampleSize" : 2000
+        }
+      },
+      "JOIN5" : {
+        "label" : "Join_Producer_Contact",
+        "description" : "",
+        "type" : "JOIN",
+        "top" : 812,
+        "left" : 252
+      },
+      "JOIN6" : {
+        "label" : "Join_ProducerContact_User",
+        "description" : "",
+        "type" : "JOIN",
+        "top" : 812.2,
+        "left" : 392
+      },
+      "TRANSFORM4" : {
+        "label" : "Transform_ProducerName",
+        "description" : "",
+        "type" : "TRANSFORM",
+        "top" : 812,
+        "left" : 672.3,
+        "graph" : {
+          "FORMULA6" : {
+            "parameters" : {
+              "type" : "BASE_FORMULA_UI"
+            },
+            "label" : "Formula"
+          },
+          "FORMULA16" : {
+            "parameters" : {
+              "type" : "BASE_FORMULA_UI"
+            },
+            "label" : "Formula"
+          }
+        },
+        "connectors" : [ {
+          "source" : "FORMULA6",
+          "target" : "FORMULA16"
+        } ]
+      },
+      "JOIN10" : {
+        "label" : "Join_Policy_Producer",
+        "description" : "",
+        "type" : "JOIN",
+        "top" : 392,
+        "left" : 672
+      },
+      "JOIN11" : {
+        "label" : "Join_Account_Policy_multi",
+        "description" : "",
+        "type" : "JOIN",
+        "top" : 532,
+        "left" : 532
+      },
+      "TRANSFORM6" : {
+        "label" : "Transform_PolicyType_MultiValueField",
+        "description" : "",
+        "type" : "TRANSFORM",
+        "top" : 532,
+        "left" : 672,
+        "graph" : {
+          "FORMULA13" : {
+            "parameters" : {
+              "type" : "BASE_FORMULA_UI"
+            },
+            "label" : "Formula"
+          }
+        },
+        "connectors" : [ ]
+      },
+      "OUTPUT1" : {
+        "label" : "Output_Customer",
+        "type" : "OUTPUT",
+        "top" : 532,
+        "left" : 952
+      },
+      "LOAD_DATASET6" : {
+        "label" : "PersonLifeEvent",
+        "type" : "LOAD_DATASET",
+        "top" : 112,
+        "left" : 112,
+        "parameters" : {
+          "sampleSize" : 2000
+        }
+      },
+      "JOIN13" : {
+        "label" : "Join_PersonLifeEvent_Contact",
+        "description" : "",
+        "type" : "JOIN",
+        "top" : 110.4,
+        "left" : 252
+      },
+      "JOIN14" : {
+        "label" : "Join_Account_PersonLifeEvent",
+        "description" : "",
+        "type" : "JOIN",
+        "top" : 531.9,
+        "left" : 812
+      },
+      "JOIN16" : {
+        "label" : "Join_Policy_UserSP",
+        "description" : "",
+        "type" : "JOIN",
+        "top" : 392,
+        "left" : 532
+      },
+      "AGGREGATE0" : {
+        "label" : "Aggregate PolicyType",
+        "description" : "",
+        "type" : "AGGREGATE",
+        "top" : 672,
+        "left" : 1232.2,
+        "graph" : {
+          "EXTRACT0" : null,
+          "AGGREGATE1" : null
+        },
+        "connectors" : [ {
+          "source" : "EXTRACT0",
+          "target" : "AGGREGATE1"
+        } ]
+      },
+      "AGGREGATE2" : {
+        "label" : "Aggregate AccountID",
+        "description" : "",
+        "type" : "AGGREGATE",
+        "top" : 532.4,
+        "left" : 1230,
+        "graph" : {
+          "EXTRACT1" : null,
+          "AGGREGATE3" : null
+        },
+        "connectors" : [ {
+          "source" : "EXTRACT1",
+          "target" : "AGGREGATE3"
+        } ]
+      },
+      "AGGREGATE4" : {
+        "label" : "Aggregate AccountID_PolicyType",
+        "description" : "",
+        "type" : "AGGREGATE",
+        "top" : 672,
+        "left" : 1652,
+        "graph" : {
+          "EXTRACT2" : null,
+          "AGGREGATE5" : null
+        },
+        "connectors" : [ {
+          "source" : "EXTRACT2",
+          "target" : "AGGREGATE5"
+        } ]
+      },
+      "JOIN19" : {
+        "label" : "Join_Account_Policy_CrossJoin",
+        "description" : "",
+        "type" : "JOIN",
+        "top" : 672,
+        "left" : 1512
+      },
+      "JOIN20" : {
+        "label" : "Join_CrossJoin_Policy",
+        "description" : "",
+        "type" : "JOIN",
+        "top" : 672,
+        "left" : 1792
+      },
+      "FILTER0" : {
+        "label" : "Filter 0",
+        "type" : "FILTER",
+        "top" : 672,
+        "left" : 1932
+      },
+      "JOIN21" : {
+        "label" : "Join_CrossJoinStream_Policy",
+        "description" : "",
+        "type" : "JOIN",
+        "top" : 672,
+        "left" : 2072
+      },
+      "JOIN22" : {
+        "label" : "Join_Policy_PersonLifeEvent",
+        "description" : "",
+        "type" : "JOIN",
+        "top" : 392,
+        "left" : 952
+      },
+      "TRANSFORM7" : {
+        "label" : "Dummy_PolicyType",
+        "description" : "",
+        "type" : "TRANSFORM",
+        "top" : 672,
+        "left" : 1372,
+        "graph" : {
+          "FORMULA22" : {
+            "parameters" : {
+              "type" : "BASE_FORMULA_UI"
+            },
+            "label" : "Formula"
+          }
+        },
+        "connectors" : [ ]
+      },
+      "TRANSFORM8" : {
+        "label" : "Dummy_Account",
+        "description" : "",
+        "type" : "TRANSFORM",
+        "top" : 532,
+        "left" : 1372,
+        "graph" : {
+          "FORMULA23" : {
+            "parameters" : {
+              "type" : "BASE_FORMULA_UI"
+            },
+            "label" : "Formula"
+          }
+        },
+        "connectors" : [ ]
+      }
+    },
+    "connectors" : [ {
+      "source" : "LOAD_DATASET1",
+      "target" : "JOIN11"
+    }, {
+      "source" : "JOIN10",
+      "target" : "JOIN22"
+    }, {
+      "source" : "LOAD_DATASET0",
+      "target" : "JOIN0"
+    }, {
+      "source" : "JOIN6",
+      "target" : "JOIN4"
+    }, {
+      "source" : "LOAD_DATASET2",
+      "target" : "JOIN5"
+    }, {
+      "source" : "LOAD_DATASET5",
+      "target" : "JOIN5"
+    }, {
+      "source" : "JOIN5",
+      "target" : "JOIN6"
+    }, {
+      "source" : "TRANSFORM0",
+      "target" : "JOIN10"
+    }, {
+      "source" : "JOIN21",
+      "target" : "OUTPUT0"
+    }, {
+      "source" : "JOIN16",
+      "target" : "JOIN11"
+    }, {
+      "source" : "JOIN11",
+      "target" : "TRANSFORM6"
+    }, {
+      "source" : "LOAD_DATASET6",
+      "target" : "JOIN13"
+    }, {
+      "source" : "LOAD_DATASET5",
+      "target" : "JOIN13"
+    }, {
+      "source" : "TRANSFORM6",
+      "target" : "JOIN14"
+    }, {
+      "source" : "JOIN13",
+      "target" : "JOIN14"
+    }, {
+      "source" : "LOAD_DATASET1",
+      "target" : "JOIN0"
+    }, {
+      "source" : "LOAD_DATASET0",
+      "target" : "JOIN16"
+    }, {
+      "source" : "JOIN14",
+      "target" : "OUTPUT1"
+    }, {
+      "source" : "JOIN4",
+      "target" : "TRANSFORM4"
+    }, {
+      "source" : "LOAD_DATASET3",
+      "target" : "JOIN6"
+    }, {
+      "source" : "LOAD_DATASET3",
+      "target" : "JOIN4"
+    }, {
+      "source" : "JOIN0",
+      "target" : "TRANSFORM0"
+    }, {
+      "source" : "LOAD_DATASET0",
+      "target" : "AGGREGATE0"
+    }, {
+      "source" : "LOAD_DATASET1",
+      "target" : "AGGREGATE2"
+    }, {
+      "source" : "LOAD_DATASET0",
+      "target" : "AGGREGATE4"
+    }, {
+      "source" : "AGGREGATE2",
+      "target" : "JOIN19"
+    }, {
+      "source" : "AGGREGATE0",
+      "target" : "JOIN19"
+    }, {
+      "source" : "JOIN19",
+      "target" : "JOIN20"
+    }, {
+      "source" : "AGGREGATE4",
+      "target" : "JOIN20"
+    }, {
+      "source" : "JOIN20",
+      "target" : "FILTER0"
+    }, {
+      "source" : "JOIN22",
+      "target" : "JOIN21"
+    }, {
+      "source" : "FILTER0",
+      "target" : "JOIN21"
+    }, {
+      "source" : "JOIN13",
+      "target" : "JOIN22"
+    }, {
+      "source" : "TRANSFORM4",
+      "target" : "JOIN10"
+    }, {
+      "source" : "TRANSFORM4",
+      "target" : "JOIN16"
+    }, {
+      "source" : "TRANSFORM7",
+      "target" : "JOIN19"
+    }, {
+      "source" : "AGGREGATE0",
+      "target" : "TRANSFORM7"
+    }, {
+      "source" : "AGGREGATE2",
+      "target" : "TRANSFORM8"
+    } ],
+    "hiddenColumns" : [ {
+      "fieldName" : "CreatedDate",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "LastModifiedDate",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "PolicyName",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "ExpirationDate",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "PremiumAmount",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "CancellationDate",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "CancellationReason",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "RenewalDate",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "FinalRenewalDate",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "PolicyDescription",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "Status",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "PremiumFrequency",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "PlanTier",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "PlanType",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "IsActive",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "ServicingOfficeCity",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "ServicingOfficeState",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "ServicingOfficeCountry",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "IsRenewedPolicy",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "CancellationReasonType",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "DateRenewed",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$InsurancePolicy"
+    }, {
+      "fieldName" : "Name",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Producer"
+    }, {
+      "fieldName" : "CreatedDate",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Producer"
+    }, {
+      "fieldName" : "AccountId",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Producer"
+    }, {
+      "fieldName" : "Type",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Producer"
+    }, {
+      "fieldName" : "InternalUserId",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Producer"
+    }, {
+      "fieldName" : "ContactId",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Producer"
+    }, {
+      "fieldName" : "Id",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Contact"
+    }, {
+      "fieldName" : "LastName",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Contact"
+    }, {
+      "fieldName" : "FirstName",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Contact"
+    }, {
+      "fieldName" : "Name",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Contact"
+    }, {
+      "fieldName" : "Id",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$User"
+    }, {
+      "fieldName" : "Username",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$User"
+    }, {
+      "fieldName" : "LastName",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$User"
+    }, {
+      "fieldName" : "FirstName",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$User"
+    }, {
+      "fieldName" : "Name",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$User"
+    }, {
+      "fieldName" : "ManagerId",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$User"
+    }, {
+      "fieldName" : "ContactId",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$User"
+    }, {
+      "fieldName" : "AccountId",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$User"
+    }, {
+      "fieldName" : "UserRoleId",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$User"
+    }, {
+      "fieldName" : "Name",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$UserRole"
+    }, {
+      "fieldName" : "RollupDescription",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$UserRole"
+    }, {
+      "fieldName" : "Name",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Account"
+    }, {
+      "fieldName" : "LastName",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Account"
+    }, {
+      "fieldName" : "FirstName",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Account"
+    }, {
+      "fieldName" : "Type",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Account"
+    }, {
+      "fieldName" : "BillingCity",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Account"
+    }, {
+      "fieldName" : "BillingState",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Account"
+    }, {
+      "fieldName" : "BillingCountry",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Account"
+    }, {
+      "fieldName" : "Industry",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Account"
+    }, {
+      "fieldName" : "CreatedDate",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Account"
+    }, {
+      "fieldName" : "LastModifiedDate",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$Account"
+    }, {
+      "fieldName" : "Id",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$PersonLifeEvent"
+    }, {
+      "fieldName" : "OwnerId",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$PersonLifeEvent"
+    }, {
+      "fieldName" : "Name",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$PersonLifeEvent"
+    }, {
+      "fieldName" : "CreatedDate",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$PersonLifeEvent"
+    }, {
+      "fieldName" : "PrimaryPersonId",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$PersonLifeEvent"
+    }, {
+      "fieldName" : "EventDate",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$PersonLifeEvent"
+    }, {
+      "fieldName" : "EventDescription",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$PersonLifeEvent"
+    }, {
+      "fieldName" : "RelatedPersonId",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$PersonLifeEvent"
+    }, {
+      "fieldName" : "EventType",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$PersonLifeEvent"
+    }, {
+      "fieldName" : "IsExpired",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$PersonLifeEvent"
+    }, {
+      "fieldName" : "ExpirationDate",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$PersonLifeEvent"
+    }, {
+      "fieldName" : "LastModifiedDate",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$PersonLifeEvent"
+    }, {
+      "fieldName" : "ExpirationDescription",
+      "objectType" : "connectedDataset",
+      "objectName" : "SFDC_LOCAL$PersonLifeEvent"
+    } ],
+    "assetType" : "TCRM"
+  },
+  "runMode" : null
+}

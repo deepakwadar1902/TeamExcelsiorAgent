@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WaveDashboard xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <content xsi:nil="true"/>
+    <application>FSCInsuranceFastStartApp</application>
+    <dateVersion>1</dateVersion>
+    <masterLabel>Customer Cross-Sell</masterLabel>
+    <templateAssetSourceName>FSC_INS_Customer_Cross_Sell_Embedded_Dashboard_tp</templateAssetSourceName>
+</WaveDashboard>
