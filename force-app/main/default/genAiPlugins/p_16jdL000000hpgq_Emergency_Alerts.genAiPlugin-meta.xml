@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPlugin xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <canEscalate>false</canEscalate>
+    <description>Use this topic to send alerts to users about ongoing crises.</description>
+    <developerName>p_16jdL000000hpgq_Emergency_Alerts</developerName>
+    <genAiFunctions>
+        <functionName>Slack__SendSlackDirectMessage</functionName>
+    </genAiFunctions>
+    <genAiFunctions>
+        <functionName>EmployeeCopilot__AnswerQuestionsWithKnowledge</functionName>
+    </genAiFunctions>
+    <genAiPluginInstructions>
+        <description>If the user needs to send an emergency alert, use Slack__SendSlackDirectMessage.</description>
+        <developerName>instruction_0</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>instruction_0</masterLabel>
+    </genAiPluginInstructions>
+    <language>en_US</language>
+    <masterLabel>Emergency Alerts</masterLabel>
+    <pluginType>Topic</pluginType>
+    <scope>Your job is to only send emergency alerts to users to inform them about ongoing crises.</scope>
+</GenAiPlugin>

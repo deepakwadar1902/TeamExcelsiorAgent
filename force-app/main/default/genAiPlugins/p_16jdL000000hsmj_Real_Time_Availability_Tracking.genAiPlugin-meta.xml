@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPlugin xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <canEscalate>false</canEscalate>
+    <description>Monitor and update volunteer availability in real time. This topic is selected when there is a need to check or update the current availability of volunteers.</description>
+    <developerName>p_16jdL000000hsmj_Real_Time_Availability_Tracking</developerName>
+    <genAiFunctions>
+        <functionName>sfdc_fieldservice__AssignApptForServiceResourceForFieldService</functionName>
+    </genAiFunctions>
+    <genAiFunctions>
+        <functionName>EmployeeCopilot__AnswerQuestionsWithKnowledge</functionName>
+    </genAiFunctions>
+    <genAiPluginInstructions>
+        <description>If the query is about updating volunteer availability, use sfdc_fieldservice__AssignApptForServiceResourceForFieldService.</description>
+        <developerName>instruction_0</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>instruction_0</masterLabel>
+    </genAiPluginInstructions>
+    <language>en_US</language>
+    <masterLabel>Real Time Availability Tracking</masterLabel>
+    <pluginType>Topic</pluginType>
+    <scope>Your job is to only track and update real-time availability of volunteers. This includes monitoring current status and updating availability information.</scope>
+</GenAiPlugin>

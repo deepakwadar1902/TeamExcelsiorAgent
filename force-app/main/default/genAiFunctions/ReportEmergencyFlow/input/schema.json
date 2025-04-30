@@ -1,0 +1,28 @@
+{
+  "required" : [ "ContactName", "EmergencyType", "Location" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "ContactName" : {
+      "title" : "ContactName",
+      "description" : "Allow the contacts to enter the name to report",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : true
+    },
+    "EmergencyType" : {
+      "title" : "EmergencyType",
+      "description" : "Allow the users to enter the emergency type or suggest the picklist values from the emergency type picklist values",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : true
+    },
+    "Location" : {
+      "title" : "Location",
+      "description" : "Allow the users to enter the location of the emergency",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : true
+    }
+  },
+  "lightning:type" : "lightning__objectType"
+}

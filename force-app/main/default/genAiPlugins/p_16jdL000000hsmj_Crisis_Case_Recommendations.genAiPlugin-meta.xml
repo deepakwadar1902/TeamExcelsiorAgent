@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPlugin xmlns="http://soap.sforce.com/2006/04/metadata">
+    <canEscalate>false</canEscalate>
+    <description>Provide real time recommendations for crisis case assignments. This topic is chosen when a request involves suggesting suitable volunteers for specific crisis cases.</description>
+    <developerName>p_16jdL000000hsmj_Crisis_Case_Recommendations</developerName>
+    <genAiFunctions>
+        <functionName>Personalization__getRecommendations</functionName>
+    </genAiFunctions>
+    <genAiFunctions>
+        <functionName>EmployeeCopilot__AnswerQuestionsWithKnowledge</functionName>
+    </genAiFunctions>
+    <genAiFunctions>
+        <functionName>Get_Crisis_Case_Recommendations2</functionName>
+    </genAiFunctions>
+    <genAiPluginInstructions>
+        <description>If the query is about recommending crisis cases, use CrisisCases__getRecommendations</description>
+        <developerName>instruction_ifthequery0</developerName>
+        <language>en_US</language>
+        <masterLabel>instruction_ifthequery0</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>If the query mentions a specific location, filter crisis cases where Location__c matches the provided location code or name</description>
+        <developerName>instruction_ifthequery1</developerName>
+        <language>en_US</language>
+        <masterLabel>instruction_ifthequery1</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>If the query includes a crisis type (e.g., Earthquake, Flood), filter cases based on Type__c accordingly</description>
+        <developerName>instruction_ifthequery2</developerName>
+        <language>en_US</language>
+        <masterLabel>instruction_ifthequery2</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>If the user asks for urgent or high-severity cases, prioritize cases by sorting them in descending order of Severity__c</description>
+        <developerName>instruction_iftheusera3</developerName>
+        <language>en_US</language>
+        <masterLabel>instruction_iftheusera3</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>Exclude crisis cases where Status__c is &quot;Resolved&quot;, unless the user explicitly requests historical or resolved cases</description>
+        <developerName>instruction_excludecri4</developerName>
+        <language>en_US</language>
+        <masterLabel>instruction_excludecri4</masterLabel>
+    </genAiPluginInstructions>
+    <genAiPluginInstructions>
+        <description>Return the top 5 relevant crisis cases with the following details: Name, Type__c, Severity__c, Status__c, and Description__c</description>
+        <developerName>instruction_returnthet5</developerName>
+        <language>en_US</language>
+        <masterLabel>instruction_returnthet5</masterLabel>
+    </genAiPluginInstructions>
+    <language>en_US</language>
+    <masterLabel>Crisis Case Recommendations</masterLabel>
+    <pluginType>Topic</pluginType>
+    <scope>Your job is to only provide recommendations for crisis case assignments. This includes suggesting volunteers based on skills, availability, and location.</scope>
+</GenAiPlugin>

@@ -1,0 +1,21 @@
+{
+  "required" : [ "location", "requiredSkills" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "location" : {
+      "title" : "Location",
+      "description" : "Enter the location identifier for the crisis case",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : true
+    },
+    "requiredSkills" : {
+      "title" : "Required Skills",
+      "description" : "Specify the required skill for the crisis case recommendation",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : true
+    }
+  },
+  "lightning:type" : "lightning__objectType"
+}

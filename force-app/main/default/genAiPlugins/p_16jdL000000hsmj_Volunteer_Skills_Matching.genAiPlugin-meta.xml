@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPlugin xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <canEscalate>false</canEscalate>
+    <description>Analyze and match volunteer skills with crisis needs. This topic is chosen when a request involves identifying suitable volunteers based on their skills.</description>
+    <developerName>p_16jdL000000hsmj_Volunteer_Skills_Matching</developerName>
+    <genAiFunctions>
+        <functionName>EmployeeCopilot__validateSegmentMember</functionName>
+    </genAiFunctions>
+    <genAiFunctions>
+        <functionName>EmployeeCopilot__AnswerQuestionsWithKnowledge</functionName>
+    </genAiFunctions>
+    <genAiPluginInstructions>
+        <description>If the query is about identifying volunteers with specific skills, use EmployeeCopilot__validateSegmentMember.</description>
+        <developerName>instruction_0</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>instruction_0</masterLabel>
+    </genAiPluginInstructions>
+    <language>en_US</language>
+    <masterLabel>Volunteer Skills Matching</masterLabel>
+    <pluginType>Topic</pluginType>
+    <scope>Your job is to only match volunteer skills with crisis requirements. This includes analyzing volunteer profiles and identifying those who fit the specific needs of a crisis.</scope>
+</GenAiPlugin>

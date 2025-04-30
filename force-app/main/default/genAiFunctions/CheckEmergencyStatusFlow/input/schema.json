@@ -1,0 +1,14 @@
+{
+  "required" : [ "ContactName" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "ContactName" : {
+      "title" : "ContactName",
+      "description" : "Allow the contact to check the status of the flow",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : true
+    }
+  },
+  "lightning:type" : "lightning__objectType"
+}

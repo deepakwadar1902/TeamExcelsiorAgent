@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPlugin xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <canEscalate>false</canEscalate>
+    <description>Analyze volunteer data to optimize matching and assignments. This topic is selected when there is a need to analyze data for better volunteer utilization.</description>
+    <developerName>p_16jdL000000hsmj_Volunteer_Data_Analysis</developerName>
+    <genAiFunctions>
+        <functionName>runtime_sales_forecasting__GetForecastGuidance</functionName>
+    </genAiFunctions>
+    <genAiFunctions>
+        <functionName>EmployeeCopilot__AnswerQuestionsWithKnowledge</functionName>
+    </genAiFunctions>
+    <genAiPluginInstructions>
+        <description>If the query is about analyzing volunteer data, use runtime_sales_forecasting__GetForecastGuidance.</description>
+        <developerName>instruction_0</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>instruction_0</masterLabel>
+    </genAiPluginInstructions>
+    <language>en_US</language>
+    <masterLabel>Volunteer Data Analysis</masterLabel>
+    <pluginType>Topic</pluginType>
+    <scope>Your job is to only analyze volunteer data for optimizing assignments. This includes reviewing data trends and providing insights for better volunteer matching.</scope>
+</GenAiPlugin>

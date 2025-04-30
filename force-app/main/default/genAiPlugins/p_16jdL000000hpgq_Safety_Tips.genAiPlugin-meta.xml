@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPlugin xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <canEscalate>false</canEscalate>
+    <description>Use this topic to provide users with safety tips and guidelines.</description>
+    <developerName>p_16jdL000000hpgq_Safety_Tips</developerName>
+    <genAiFunctions>
+        <functionName>EmployeeCopilot__AnswerQuestionsWithKnowledge</functionName>
+    </genAiFunctions>
+    <genAiPluginInstructions>
+        <description>If the user asks for safety tips, use EmployeeCopilot__AnswerQuestionsWithKnowledge.</description>
+        <developerName>instruction_0</developerName>
+        <language xsi:nil="true"/>
+        <masterLabel>instruction_0</masterLabel>
+    </genAiPluginInstructions>
+    <language>en_US</language>
+    <masterLabel>Safety Tips</masterLabel>
+    <pluginType>Topic</pluginType>
+    <scope>Your job is to only offer safety tips and guidelines to users.</scope>
+</GenAiPlugin>

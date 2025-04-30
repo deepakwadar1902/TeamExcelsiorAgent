@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Sede del individuo</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Sedes del individuo</value>
+    </caseValues>
+    <gender>Masculine</gender>
+    <nameFieldLabel>Relación de los individuos con la sede</nameFieldLabel>
+</CustomObjectTranslation>

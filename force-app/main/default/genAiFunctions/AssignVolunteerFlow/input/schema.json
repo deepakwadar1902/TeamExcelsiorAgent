@@ -1,0 +1,14 @@
+{
+  "required" : [ "EmergencyId" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "EmergencyId" : {
+      "title" : "EmergencyId",
+      "description" : "Based on the emergency assign the volunteer",
+      "lightning:type" : "lightning__textType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : true
+    }
+  },
+  "lightning:type" : "lightning__objectType"
+}

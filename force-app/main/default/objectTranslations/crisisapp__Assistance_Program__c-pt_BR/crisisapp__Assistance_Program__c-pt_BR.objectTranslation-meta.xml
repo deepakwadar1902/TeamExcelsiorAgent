@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Programa de assistência aos funcionários</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Programas de assistência aos funcionários</value>
+    </caseValues>
+    <gender>Masculine</gender>
+    <nameFieldLabel>Nome do Programa de assistência</nameFieldLabel>
+</CustomObjectTranslation>
